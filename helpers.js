@@ -1,7 +1,6 @@
 let helpers = {};
 
 helpers.post = function(endpoint, data, callback) {
-  console.log('Data in post function: ', data);
   let options = { 
     method: 'POST',
     headers: { 

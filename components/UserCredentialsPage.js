@@ -49,7 +49,6 @@ export default class UserCredentialsPage extends React.Component {
               username: this.state.username,
               password: this.state.password
             };
-            console.log(this);
             this.props.handleSubmit(userData);
           }}
         />
