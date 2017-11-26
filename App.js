@@ -15,10 +15,13 @@ export default class App extends React.Component {
     super(props);
     this.state = {
       img: "http://www.altinawildlife.com/wp-content/uploads/2016/10/Google-app-icon-small.png",
+      view: 'login',
+      message: ''
     };
     this.getImage = this.getImage.bind(this);
     this.handleReturnedImage = this.handleReturnedImage.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
+    this.handleSignup = this.handleSignup.bind(this);
   }
 
   handleReturnedImage(response) {
@@ -27,7 +30,20 @@ export default class App extends React.Component {
   }
 
   handleLogin(userData) {
-    helpers.post(server + '/login', userData, this.handleReturnedImage);
+    helpers.post(server + '/login', userData, (response) => {
+      let msg = response._bodyText
+      this.setState({message: msg});
+    });
+  }
+
+  handleSignup(userData) {
+    console.log(this);
+    console.log('user data: ', userData);
+    helpers.post(server + '/signup', userData, (response) => {
+      console.log(response._bodyText);
+      let msg = response._bodyText;
+      this.setState({message: msg});
+    });
   }
 
   getImage() {
@@ -36,14 +52,42 @@ export default class App extends React.Component {
 
 
   render() {
+    let view = <View></View>;
+    if (this.state.view === 'login') {
+      view = (
+        <View style={styles.container}>
+          <Text>{this.state.message}</Text>
+          <Text style={styles.text}>
+            Login Page
+          </Text>
+          <UserCredentialsPage handleSubmit={this.handleLogin} type={this.state.view} />
+          <Image source={{uri: this.state.img}} style={styles.image} />
+           <Button onPress={() => { 
+             this.setState({view: 'signup'});
+            }} title="Sign Up" 
+          />
+        </View>
+      );
+    } else if (this.state.view === 'signup') {
+      view = (
+        <View style={styles.container}>
+          <Text>{this.state.message}</Text>
+          <Text style={styles.text}>
+            Signup Page
+          </Text>
+          <UserCredentialsPage handleSubmit={this.handleSignup} type={this.state.view}/>
+          <Image source={{uri: this.state.img}} style={styles.image} />
+           <Button onPress={() => { 
+             this.setState({view: 'login'});
+            }} title="Log In" 
+          />
+        </View>
+      );
+    } else {
+      console.log('Other views');
+    }
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>
-          Top Text
-        </Text>
-        <UserCredentialsPage handleLogin={this.handleLogin}/>
-        <Image source={{uri: this.state.img}} style={styles.image} />
-      </View>
+      view
     );
   }
 }
@@ -56,7 +100,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   text: {
-    fontSize: 80,
+    fontSize: 40,
     color: "#000000"
   },
   image: {

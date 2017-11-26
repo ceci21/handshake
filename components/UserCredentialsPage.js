@@ -39,17 +39,18 @@ export default class UserCredentialsPage extends React.Component {
               username: this.state.username,
               password: this.state.password
             };
-            this.props.handleLogin(userData);
+            this.props.handleSubmit(userData);
           }}
         />
         <Button 
-          title="Login" 
+          title={this.props.type.toUpperCase()} 
           onPress={() => {
             let userData = {
               username: this.state.username,
               password: this.state.password
             };
-            this.props.handleLogin(userData);
+            console.log(this);
+            this.props.handleSubmit(userData);
           }}
         />
       </View>
