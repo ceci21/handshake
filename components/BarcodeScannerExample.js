@@ -29,7 +29,7 @@ export default class BarcodeScannerExample extends React.Component {
           <BarCodeScanner
             onBarCodeRead={this._handleBarCodeRead}
             type='front'
-            torchMode='on'
+            // torchMode='on'
             style={StyleSheet.absoluteFill}
             barCodeTypes={[BarCodeScanner.Constants.BarCodeType.qr]}
           />
