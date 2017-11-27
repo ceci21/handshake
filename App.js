@@ -18,7 +18,8 @@ export default class App extends React.Component {
       userQRCode: 'http://www.altinawildlife.com/wp-content/uploads/2016/10/Google-app-icon-small.png',
       QRCodeData: null,
       view: 'login',
-      message: ''
+      message: '',
+      user: null
     };
     this.getUserQRCode = this.getUserQRCode.bind(this);
     this.handleReturnedImage = this.handleReturnedImage.bind(this);
@@ -63,7 +64,7 @@ export default class App extends React.Component {
     helpers.post(server + '/login', userData, response => {
       response = JSON.parse(response._bodyText);
       this.getUserQRCode();
-      this.refresh({ message: response.message }, { view: 'qrcode-screen' });
+      this.refresh({ message: response.message }, { view: 'qrcode-screen', user: userData.username });
     });
   }
 
@@ -75,7 +76,13 @@ export default class App extends React.Component {
   }
 
   handleScan(QRCodeData) {
-    this.setState({QRCodeData: QRCodeData, view: 'view-qrcode-data-screen'});
+    let handshakeData = {
+      scanningUser: this.state.user,
+      scannedUser: QRCodeData
+    };
+    helpers.post(server + '/handshake', handshakeData, response => {
+      this.setState({QRCodeData: QRCodeData, view: 'view-qrcode-data-screen'});
+    });
   }
   
   getUserQRCode() {
@@ -86,7 +93,6 @@ export default class App extends React.Component {
     let QRCode = response._bodyText;
     this.setState({userQRCode: QRCode})
   }
-
 
   render() {
     let view = <View />;
@@ -123,7 +129,6 @@ export default class App extends React.Component {
     } else if (this.state.view === 'qrcode-screen') {
       view = <BarcodeScreen userQRCode={this.state.userQRCode} handleScan={this.handleScan} />;
     } else if (this.state.view === 'view-qrcode-data-screen') {
-      console.log('QR code data: ', this.state.QRCodeData);
       view = (
         <View style={styles.container}>
          <Text>{this.state.QRCodeData}</Text>
