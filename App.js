@@ -5,8 +5,15 @@ import BarcodeScanner from './components/BarcodeScanner.js';
 import UserCredentialsPage from './components/UserCredentialsPage.js';
 import takeSnapshotAsync from 'expo/src/takeSnapshotAsync';
 import BarcodeScreen from './components/BarcodeScreen.js';
+import UserDataScreen from './components/UserDataScreen.js';
 import { Audio } from 'expo';
 import io from 'socket.io-client';
+
+const audioFiles = {
+  success: require('./ComputerSFX_alerts-056.mp3'),
+  beep: require('./Data-Beep-Notifier-Email Received.mp3'),
+  fail: require('./ComputerSFX_alerts-046.mp3')
+}
 
 import helpers from './helpers.js';
 
@@ -15,16 +22,24 @@ const server = 'http://192.168.0.12:3000';
 
 const socket = io('http://192.168.0.12:3000');
 
-const playSoundNotification = () => {
+const playSoundNotification = (source) => {
+  console.log('Playing sound now');
   var playSound = async function() {
-    const { sound, status } = await Audio.Sound.create(require('./ComputerSFX_alerts-077.mp3'), { shouldPlay: true });
+    const { sound, status } = await Audio.Sound.create(source, { shouldPlay: true });
     sound.playAsync();
   };
   playSound();
 };
 
-socket.on('playSound', () => {
-  playSoundNotification();
+socket.on('playSound', (type) => {
+  console.log('Sound type: ', type);
+  if (type === 'success') {
+    playSoundNotification(audioFiles.success);
+  } else if (type === 'beep') {
+    playSoundNotification(audioFiles.beep);
+  } else if (type === 'fail') {
+    playSoundNotification(audioFiles.fail);
+  }
 });
 
 export default class App extends React.Component {
@@ -35,7 +50,8 @@ export default class App extends React.Component {
       QRCodeData: null,
       view: 'login',
       message: '',
-      user: null
+      user: null,
+      selectedUser: null
     };
     this.getUserQRCode = this.getUserQRCode.bind(this);
     this.handleReturnedImage = this.handleReturnedImage.bind(this);
@@ -43,7 +59,6 @@ export default class App extends React.Component {
     this.handleSignup = this.handleSignup.bind(this);
     this.handleScan = this.handleScan.bind(this);
     this.refresh = this.refresh.bind(this);
-
   }
 
   refresh(both, loggedIn, loggedOut) {
@@ -98,8 +113,14 @@ export default class App extends React.Component {
       scannedUser: QRCodeData
     };
     helpers.post(server + '/handshake', handshakeData, response => {
-      socket.emit('playSound');
-      this.setState({ QRCodeData: QRCodeData, view: 'view-qrcode-data-screen' });
+      console.log('Handshake response: ', response);
+      if (response === '') {
+        socket.emit('playSound', 'success');
+        this.refresh(null, { QRCodeData: QRCodeData, selectedUser: QRCodeData, view: 'user-data-screen' });
+      } else {
+        socket.emit('playSound', 'beep');
+        alert(response);
+      }
     });
   }
 
@@ -109,10 +130,8 @@ export default class App extends React.Component {
 
   handleReturnedImage(response) {
     let QRCode = response._bodyText;
-    this.setState({ userQRCode: QRCode });
+    this.refresh(null, { userQRCode: QRCode });
   }
-
-
 
   render() {
     let view = <View />;
@@ -125,7 +144,7 @@ export default class App extends React.Component {
           <Image source={{ uri: this.state.userQRCode }} style={styles.image} />
           <Button
             onPress={() => {
-              this.setState({ view: 'signup' });
+              this.refresh({ view: 'signup' });
             }}
             title="Sign Up"
           />
@@ -140,14 +159,14 @@ export default class App extends React.Component {
           <Image source={{ uri: this.state.img }} style={styles.image} />
           <Button
             onPress={() => {
-              this.setState({ view: 'login' });
+              this.refresh({ view: 'login' });
             }}
             title="Log In"
           />
         </View>
       );
     } else if (this.state.view === 'qrcode-screen') {
-      view = <BarcodeScreen userQRCode={this.state.userQRCode} handleScan={this.handleScan} />;
+      view = <BarcodeScreen userQRCode={this.state.userQRCode} message={this.state.message} handleScan={this.handleScan} />;
     } else if (this.state.view === 'view-qrcode-data-screen') {
       view = (
         <View style={styles.container}>
@@ -155,11 +174,15 @@ export default class App extends React.Component {
           <Button
             title="Go Back"
             onPress={() => {
-              this.setState({ view: 'qrcode-screen' });
+              this.refresh(null, { view: 'qrcode-screen' });
             }}
           />
         </View>
       );
+    } else if (this.state.view === 'user-data-screen') {
+      view = (
+        <UserDataScreen selectedUser={this.state.selectedUser} />
+      )
     } else {
       console.log('Other views');
     }

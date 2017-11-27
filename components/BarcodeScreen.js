@@ -3,6 +3,11 @@ import { StyleSheet, Text, View, Image } from 'react-native';
 import BarcodeScanner from './BarcodeScanner.js';
 
 export default class BarcodeScreen extends React.Component {
+  componentWillReceiveProps(props) {
+    console.log('new props: ', props);
+    alert(this.props.message);
+  }
+
   render() {
     return (
       <View style={styles.container}>
