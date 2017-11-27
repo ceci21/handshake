@@ -5,11 +5,27 @@ import BarcodeScanner from './components/BarcodeScanner.js';
 import UserCredentialsPage from './components/UserCredentialsPage.js';
 import takeSnapshotAsync from 'expo/src/takeSnapshotAsync';
 import BarcodeScreen from './components/BarcodeScreen.js';
+import { Audio } from 'expo';
+import io from 'socket.io-client';
 
 import helpers from './helpers.js';
 
-const server = '192.168.0.12:80';
+const server = 'http://192.168.0.12:3000';
 // const server = 'http://handshake-server.herokuapp.com'
+
+const socket = io('http://192.168.0.12:3000');
+
+const playSoundNotification = () => {
+  var playSound = async function() {
+    const { sound, status } = await Audio.Sound.create(require('./ComputerSFX_alerts-077.mp3'), { shouldPlay: true });
+    sound.playAsync();
+  };
+  playSound();
+};
+
+socket.on('playSound', () => {
+  playSoundNotification();
+});
 
 export default class App extends React.Component {
   constructor(props) {
@@ -27,6 +43,7 @@ export default class App extends React.Component {
     this.handleSignup = this.handleSignup.bind(this);
     this.handleScan = this.handleScan.bind(this);
     this.refresh = this.refresh.bind(this);
+
   }
 
   refresh(both, loggedIn, loggedOut) {
@@ -81,18 +98,21 @@ export default class App extends React.Component {
       scannedUser: QRCodeData
     };
     helpers.post(server + '/handshake', handshakeData, response => {
-      this.setState({QRCodeData: QRCodeData, view: 'view-qrcode-data-screen'});
+      socket.emit('playSound');
+      this.setState({ QRCodeData: QRCodeData, view: 'view-qrcode-data-screen' });
     });
   }
-  
+
   getUserQRCode() {
     helpers.post(server + '/qrcode', {}, this.handleReturnedImage);
   }
 
   handleReturnedImage(response) {
     let QRCode = response._bodyText;
-    this.setState({userQRCode: QRCode})
+    this.setState({ userQRCode: QRCode });
   }
+
+
 
   render() {
     let view = <View />;
@@ -131,15 +151,15 @@ export default class App extends React.Component {
     } else if (this.state.view === 'view-qrcode-data-screen') {
       view = (
         <View style={styles.container}>
-         <Text>{this.state.QRCodeData}</Text>
-         <Button 
-            title="Go Back" 
+          <Text>{this.state.QRCodeData}</Text>
+          <Button
+            title="Go Back"
             onPress={() => {
-              this.setState({view: 'qrcode-screen'})
-            }} 
+              this.setState({ view: 'qrcode-screen' });
+            }}
           />
         </View>
-        )
+      );
     } else {
       console.log('Other views');
     }
