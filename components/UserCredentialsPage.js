@@ -21,7 +21,7 @@ export default class UserCredentialsPage extends React.Component {
           onChangeText={(text) => {
             this.setState({username: text})
           }}
-          onSubmitEditing={(event) => {
+          onSubmitEditing={() => {
             this.refs.PasswordInput.focus();
           }}
         />
@@ -34,7 +34,7 @@ export default class UserCredentialsPage extends React.Component {
           onChangeText={(text) => {
             this.setState({password: text})
           }}
-          onSubmitEditing={(event) => {
+          onSubmitEditing={() => {
             let userData = {
               username: this.state.username,
               password: this.state.password

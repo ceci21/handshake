@@ -1,9 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, Text, View, Image, Button } from 'react-native';
 
 import helpers from '../helpers.js';
-
-const server = 'http://192.168.0.12:3000';
 
 export default class UserDataScreen extends React.Component {
   constructor(props) {
@@ -15,8 +13,9 @@ export default class UserDataScreen extends React.Component {
 
   componentDidMount() {
     console.log('Component mounting....');
-    helpers.post(server + '/userdata', {username: this.props.selectedUser}, (response) => {
-      let data = response._bodyText;
+    helpers.post(this.props.server + '/userdata', {username: this.props.selectedUser}, (response) => {
+      let data = JSON.parse(response._bodyText);
+      console.log('Data from mounting: ', data);
       this.setState({userData: data});
     })
   }
@@ -24,7 +23,10 @@ export default class UserDataScreen extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-       <Text>{this.state.userData}</Text>
+       <Text>{JSON.stringify(this.state.userData)}</Text>
+       <Button title="QR Screen" onPress={() => {
+         this.props.refresh(null, {view: 'qrcode-screen'});
+       }} />
       </View>
     );
   }

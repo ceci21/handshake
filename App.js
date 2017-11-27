@@ -8,27 +8,29 @@ import BarcodeScreen from './components/BarcodeScreen.js';
 import UserDataScreen from './components/UserDataScreen.js';
 import { Audio } from 'expo';
 import io from 'socket.io-client';
+import AddEntriesScreen from './components/AddEntriesScreen.js';
 
 const audioFiles = {
   success: require('./ComputerSFX_alerts-056.mp3'),
   beep: require('./Data-Beep-Notifier-Email-Received.mp3'),
   fail: require('./ComputerSFX_alerts-046.mp3')
-}
+};
 
 import helpers from './helpers.js';
 
-const server = 'http://192.168.0.12:3000';
+// const server = 'http://192.168.0.12:3000';
+const server = 'http://10.30.64.233:3000';
 // const server = 'http://handshake-server.herokuapp.com'
 
-const socket = io('http://192.168.0.12:3000');
+const socket = io(server);
 
-const playSoundNotification = async (source) => {
+const playSoundNotification = async source => {
   console.log('Playing sound now');
   const { sound, status } = await Audio.Sound.create(source, { shouldPlay: true });
   sound.playAsync();
 };
 
-socket.on('playSound', (type) => {
+socket.on('playSound', type => {
   console.log('Sound type: ', type);
   if (type === 'success') {
     playSoundNotification(audioFiles.success);
@@ -45,7 +47,7 @@ export default class App extends React.Component {
     this.state = {
       userQRCode: 'http://www.altinawildlife.com/wp-content/uploads/2016/10/Google-app-icon-small.png',
       QRCodeData: null,
-      view: 'login',
+      view: 'add-entries-screen',
       message: '',
       user: null,
       selectedUser: null
@@ -116,13 +118,13 @@ export default class App extends React.Component {
     });
   }
 
-  getUserQRCode() {
-    helpers.post(server + '/qrcode', {}, this.handleReturnedImage);
-  }
-
   handleReturnedImage(response) {
     let QRCode = response._bodyText;
     this.refresh(null, { userQRCode: QRCode });
+  }
+
+  getUserQRCode() {
+    helpers.post(server + '/qrcode', {}, this.handleReturnedImage);
   }
 
   render() {
@@ -158,7 +160,9 @@ export default class App extends React.Component {
         </View>
       );
     } else if (this.state.view === 'qrcode-screen') {
-      view = <BarcodeScreen userQRCode={this.state.userQRCode} message={this.state.message} handleScan={this.handleScan} />;
+      view = (
+        <BarcodeScreen userQRCode={this.state.userQRCode} message={this.state.message} handleScan={this.handleScan} />
+      );
     } else if (this.state.view === 'view-qrcode-data-screen') {
       view = (
         <View style={styles.container}>
@@ -172,9 +176,11 @@ export default class App extends React.Component {
         </View>
       );
     } else if (this.state.view === 'user-data-screen') {
-      view = (
-        <UserDataScreen selectedUser={this.state.selectedUser} />
-      )
+      view = <UserDataScreen selectedUser={this.state.selectedUser} refresh={this.refresh} server={server} />;
+     } else if (this.state.view === 'add-entries-screen') {
+      view = <AddEntriesScreen />;
+    } else if (this.state.view === 'home') {
+      view = <Options changeView={this.refresh} />
     } else {
       console.log('Other views');
     }
