@@ -11,7 +11,7 @@ import io from 'socket.io-client';
 
 const audioFiles = {
   success: require('./ComputerSFX_alerts-056.mp3'),
-  beep: require('./Data-Beep-Notifier-Email Received.mp3'),
+  beep: require('./Data-Beep-Notifier-Email-Received.mp3'),
   fail: require('./ComputerSFX_alerts-046.mp3')
 }
 
@@ -22,13 +22,10 @@ const server = 'http://192.168.0.12:3000';
 
 const socket = io('http://192.168.0.12:3000');
 
-const playSoundNotification = (source) => {
+const playSoundNotification = async (source) => {
   console.log('Playing sound now');
-  var playSound = async function() {
-    const { sound, status } = await Audio.Sound.create(source, { shouldPlay: true });
-    sound.playAsync();
-  };
-  playSound();
+  const { sound, status } = await Audio.Sound.create(source, { shouldPlay: true });
+  sound.playAsync();
 };
 
 socket.on('playSound', (type) => {
@@ -114,13 +111,8 @@ export default class App extends React.Component {
     };
     helpers.post(server + '/handshake', handshakeData, response => {
       console.log('Handshake response: ', response);
-      if (response === '') {
-        socket.emit('playSound', 'success');
-        this.refresh(null, { QRCodeData: QRCodeData, selectedUser: QRCodeData, view: 'user-data-screen' });
-      } else {
-        socket.emit('playSound', 'beep');
-        alert(response);
-      }
+      socket.emit('playSound', 'success');
+      this.refresh(null, { QRCodeData: QRCodeData, selectedUser: QRCodeData, view: 'user-data-screen' });
     });
   }
 
