@@ -8,7 +8,7 @@ import BarcodeScreen from './components/BarcodeScreen.js';
 
 import helpers from './helpers.js';
 
-const server = 'http://192.168.43.247:3000';
+const server = '192.168.0.12:80';
 // const server = 'http://handshake-server.herokuapp.com'
 
 export default class App extends React.Component {
