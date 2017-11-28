@@ -51,9 +51,9 @@ export default class App extends React.Component {
       view: 'login',
       message: '',
       user: null,
-      userData: null,
+      userData: {},
       selectedUser: null,
-      selectedUserData: null
+      selectedUserData: {}
     };
   }
 
@@ -91,7 +91,6 @@ export default class App extends React.Component {
   handleLogin = userCredentials => {
     // Log in
     helpers.post(server + '/login', userCredentials, response => {
-      console.log('User\'s data: ', userCredentials);
       response = JSON.parse(response._bodyText);
       // Get QR code.
       this.getUserQRCode();
@@ -100,7 +99,7 @@ export default class App extends React.Component {
     });
 
     helpers.post(server + '/userdata', {username: userCredentials.username}, response => {
-      this.refresh({userData: response._bodyText.userData});
+      this.refresh(null, {userData: JSON.parse(response._bodyText)});
     })
   };
 
@@ -188,9 +187,10 @@ export default class App extends React.Component {
         />
       );
     } else if (this.state.view === 'add-entries-screen') {
+      console.log(this.state.selectedUserData);
       view = (
         <AddEntriesScreen
-          selectedUserData={this.state.selectedUserData}
+          userData={this.state.userData}
           handleSubmitEntries={this.handleSubmitEntries}
         />
       );

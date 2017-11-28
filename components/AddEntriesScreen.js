@@ -6,18 +6,18 @@ export default class AddEntriesScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      entryNames: this.props.selectedUserData || ['Name', 'Email', 'Website'],
-      entries: [],
-      entryData: {}
+      entryNames: ['Name', 'Email', 'Website'],
+      textInputs: [],
+      entries: this.props.userData.entries
     }
   }
   
   componentWillMount() {
-    this.setState({entries: this.getEntries(this.state.entryNames)});
+    this.setState({textInputs: this.getTextInputs(this.state.entryNames)});
   }
 
-  getEntries = (entryNames) => {
-    let entries = entryNames.map((entryName) => {
+  getTextInputs = (entryNames) => {
+    let textInputs = entryNames.map((entryName) => {
       return (
         <TextInput 
           id={entryName} 
@@ -25,15 +25,15 @@ export default class AddEntriesScreen extends React.Component {
           style={styles.textInput} 
           onChangeText={(text) => {
             this.setState((prevState, props) => {
-              let entryData = Object.assign({}, prevState.entryData);
-              entryData[entryName] = text;
-              return {entryData: entryData};
+              let entries = Object.assign({}, prevState.entries);
+              entries[entryName] = text;
+              return {entries: entries};
             });
           }}
         />
       );
     });
-    return entries;
+    return textInputs;
   }
 
   addEntry = (name) => {
@@ -41,21 +41,21 @@ export default class AddEntriesScreen extends React.Component {
       // Add entry name.
       let entryNames = prevState.entryNames.slice();
       entryNames.push(name);
-      // Get new entries.
-      let entries = this.getEntries(entryNames);
-      return {entryNames: entryNames, entries: entries};
+      // Get new textInputs.
+      let textInputs = this.getTextInputs(entryNames);
+      return {entryNames: entryNames, textInputs: textInputs};
     });
   }
 
   render() {
     return (
       <View style={styles.container}>
-        {this.state.entries}
+        {this.state.textInputs}
         <AddEntryModal 
           addEntry={this.addEntry} 
         />
         <Button title="Submit entry" onPress={() => {
-          this.props.handleSubmitEntries(this.state.entryData);
+          this.props.handleSubmitEntries(this.state.entries);
         }} />
       </View>
     );
