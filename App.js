@@ -140,8 +140,8 @@ export default class App extends React.Component {
 
   getSelectedUserData = () => {
     helpers.post(server + '/selecteduserdata', { username: this.state.selectedUser }, response => {
+      console.log('Get Selected User Data response', response);
       let data = JSON.parse(response._bodyText);
-      console.log('Data from mounting: ', data);
       this.setState({ selectedUserData: data });
     });
   };

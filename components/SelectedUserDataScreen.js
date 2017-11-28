@@ -8,9 +8,12 @@ export default class SelectedUserDataScreen extends React.Component {
     super(props);
   }
 
-  componentDidMount() {
-    this.props.getSelectedUserData();
+  componentWillMount() {
+    this.props.getSelectedUserData()    
+  }
 
+  componentWillUpdate() {
+    this.props.getSelectedUserData();
   }
 
   render() {
