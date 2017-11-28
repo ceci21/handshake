@@ -4,11 +4,6 @@ import BarcodeScanner from './BarcodeScanner.js';
 import UserCredentialsPage from './UserCredentialsPage.js';
 
 export default class LoginScreen extends React.Component {
-  componentWillReceiveProps(props) {
-    console.log('new props: ', props);
-    alert(this.props.message);
-  }
-
   render() {
     return (
         <View style={styles.container}>

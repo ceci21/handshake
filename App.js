@@ -20,8 +20,7 @@ const audioFiles = {
 
 import helpers from './helpers.js';
 
-// const server = 'http://192.168.0.12:3000';
-const server = 'http://10.30.64.233:3000';
+const server = 'http://192.168.43.247:3000';
 // const server = 'http://handshake-server.herokuapp.com'
 
 const socket = io(server);
@@ -96,14 +95,13 @@ export default class App extends React.Component {
       response = JSON.parse(response._bodyText);
       // Get QR code.
       this.getUserQRCode();
-
-      // Get user's data that is logged in. 
-      helpers.post(server + '/userdata', {username: userCredentials.username}, response => {
-
-        // Once user's data has been retrieved, set the message, the view to home, the user's name, and the user's data.
-        this.refresh({ message: response.message }, { view: 'home', user: userCredentials.username, userData: response._bodyText.userData });
-      } )
+      // Refresh app.
+      this.refresh({ message: response.message }, { view: 'home', user: userCredentials.username });
     });
+
+    helpers.post(server + '/userdata', {username: userCredentials.username}, response => {
+      this.refresh({userData: response._bodyText.userData});
+    })
   };
 
   handleSignup = userData => {
