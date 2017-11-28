@@ -6,8 +6,9 @@ export default class AddEntriesScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      entryNames: ['Name', 'Email', 'Website'],
+      entryNames: this.props.selectedUserData || ['Name', 'Email', 'Website'],
       entries: [],
+      entryData: {}
     }
   }
   
@@ -17,7 +18,20 @@ export default class AddEntriesScreen extends React.Component {
 
   getEntries = (entryNames) => {
     let entries = entryNames.map((entryName) => {
-      return <TextInput id={entryName} placeholder={entryName} style={styles.textInput} />
+      return (
+        <TextInput 
+          id={entryName} 
+          placeholder={entryName} 
+          style={styles.textInput} 
+          onChangeText={(text) => {
+            this.setState((prevState, props) => {
+              let entryData = Object.assign({}, prevState.entryData);
+              entryData[entryName] = text;
+              return {entryData: entryData};
+            });
+          }}
+        />
+      );
     });
     return entries;
   }
@@ -34,13 +48,15 @@ export default class AddEntriesScreen extends React.Component {
   }
 
   render() {
-    console.log('Entries: ', this.state.entries);
     return (
       <View style={styles.container}>
         {this.state.entries}
         <AddEntryModal 
           addEntry={this.addEntry} 
         />
+        <Button title="Submit entry" onPress={() => {
+          this.props.handleSubmitEntries(this.state.entryData);
+        }} />
       </View>
     );
   }

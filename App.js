@@ -2,13 +2,15 @@ import React from 'react';
 import { StyleSheet, Text, View, Button, Image } from 'react-native';
 import CameraExample from './components/CameraExample.js';
 import BarcodeScanner from './components/BarcodeScanner.js';
-import UserCredentialsPage from './components/UserCredentialsPage.js';
 import takeSnapshotAsync from 'expo/src/takeSnapshotAsync';
 import BarcodeScreen from './components/BarcodeScreen.js';
-import UserDataScreen from './components/UserDataScreen.js';
+import SelectedUserDataScreen from './components/SelectedUserDataScreen.js';
 import { Audio } from 'expo';
 import io from 'socket.io-client';
 import AddEntriesScreen from './components/AddEntriesScreen.js';
+import Test from './components/Test.js';
+import SignupScreen from './components/SignupScreen.js';
+import LoginScreen from './components/LoginScreen.js';
 
 const audioFiles = {
   success: require('./ComputerSFX_alerts-056.mp3'),
@@ -47,20 +49,16 @@ export default class App extends React.Component {
     this.state = {
       userQRCode: 'http://www.altinawildlife.com/wp-content/uploads/2016/10/Google-app-icon-small.png',
       QRCodeData: null,
-      view: 'add-entries-screen',
+      view: 'login',
       message: '',
       user: null,
-      selectedUser: null
+      userData: null,
+      selectedUser: null,
+      selectedUserData: null
     };
-    this.getUserQRCode = this.getUserQRCode.bind(this);
-    this.handleReturnedImage = this.handleReturnedImage.bind(this);
-    this.handleLogin = this.handleLogin.bind(this);
-    this.handleSignup = this.handleSignup.bind(this);
-    this.handleScan = this.handleScan.bind(this);
-    this.refresh = this.refresh.bind(this);
   }
 
-  refresh(both, loggedIn, loggedOut) {
+  refresh = (both, loggedIn, loggedOut) => {
     // State object which will have additional properties added to it.
     var state = {};
 
@@ -91,82 +89,89 @@ export default class App extends React.Component {
     });
   }
 
-  handleLogin(userData) {
-    helpers.post(server + '/login', userData, response => {
+  handleLogin = userCredentials => {
+    // Log in
+    helpers.post(server + '/login', userCredentials, response => {
+      console.log('User\'s data: ', userCredentials);
       response = JSON.parse(response._bodyText);
+      // Get QR code.
       this.getUserQRCode();
-      this.refresh({ message: response.message }, { view: 'qrcode-screen', user: userData.username });
-    });
-  }
 
-  handleSignup(userData) {
+      // Get user's data that is logged in. 
+      helpers.post(server + '/userdata', {username: userCredentials.username}, response => {
+
+        // Once user's data has been retrieved, set the message, the view to home, the user's name, and the user's data.
+        this.refresh({ message: response.message }, { view: 'home', user: userCredentials.username, userData: response._bodyText.userData });
+      } )
+    });
+  };
+
+  handleSignup = userData => {
     helpers.post(server + '/signup', userData, response => {
       response = JSON.parse(response._bodyText);
       this.refresh({ message: response.message });
     });
-  }
+  };
 
-  handleScan(QRCodeData) {
+  handleScan = QRCodeData => {
     let handshakeData = {
       scanningUser: this.state.user,
       scannedUser: QRCodeData
     };
     helpers.post(server + '/handshake', handshakeData, response => {
-      console.log('Handshake response: ', response);
+      console.log('Handshake response: ', QRCodeData);
       socket.emit('playSound', 'success');
-      this.refresh(null, { QRCodeData: QRCodeData, selectedUser: QRCodeData, view: 'user-data-screen' });
+      this.refresh(null, { selectedUser: QRCodeData, view: 'user-data-screen' });
+    });
+  };
+
+  handleSubmitEntries = entryData => {
+    let userData = {
+      user: this.state.user,
+      entryData: entryData
+    };
+    helpers.post(server + '/updateuserentries', userData, response => {
+      console.log(response._bodyText);
+    });
+  };
+
+  handleReturnedImage = response => {
+    let QRCode = response._bodyText;
+    this.refresh(null, { userQRCode: QRCode });
+  };
+
+  getSelectedUserData = () => {
+    helpers.post(server + '/selecteduserdata', { username: this.state.selectedUser }, response => {
+      let data = JSON.parse(response._bodyText);
+      console.log('Data from mounting: ', data);
+      this.setState({ selectedUserData: data });
+    });
+  };
+
+  getUserData = () => {
+    helpers.post(server + '/userdata', { username: this.state.user }, response => {
+      let data = JSON.parse(response._bodyText);
+      console.log('Data from mounting: ', data);
+      this.setState({ userData: data });
     });
   }
 
-  handleReturnedImage(response) {
-    let QRCode = response._bodyText;
-    this.refresh(null, { userQRCode: QRCode });
-  }
-
-  getUserQRCode() {
+  getUserQRCode = () => {
     helpers.post(server + '/qrcode', {}, this.handleReturnedImage);
-  }
+  };
 
   render() {
     let view = <View />;
     if (this.state.view === 'login') {
-      view = (
-        <View style={styles.container}>
-          <Text>{this.state.message}</Text>
-          <Text style={styles.text}>Login Page</Text>
-          <UserCredentialsPage handleSubmit={this.handleLogin} type={this.state.view} />
-          <Image source={{ uri: this.state.userQRCode }} style={styles.image} />
-          <Button
-            onPress={() => {
-              this.refresh({ view: 'signup' });
-            }}
-            title="Sign Up"
-          />
-        </View>
-      );
+      view = <LoginScreen message={this.state.message} handleLogin={this.handleLogin} refresh={this.refresh} />;
     } else if (this.state.view === 'signup') {
-      view = (
-        <View style={styles.container}>
-          <Text>{this.state.message}</Text>
-          <Text style={styles.text}>Signup Page</Text>
-          <UserCredentialsPage handleSubmit={this.handleSignup} type={this.state.view} />
-          <Image source={{ uri: this.state.img }} style={styles.image} />
-          <Button
-            onPress={() => {
-              this.refresh({ view: 'login' });
-            }}
-            title="Log In"
-          />
-        </View>
-      );
+      view = <SignupScreen message={this.state.message} handleSignup={this.handleSignup} refresh={this.refresh} />;
     } else if (this.state.view === 'qrcode-screen') {
-      view = (
-        <BarcodeScreen userQRCode={this.state.userQRCode} message={this.state.message} handleScan={this.handleScan} />
-      );
+      view = <BarcodeScreen userQRCode={this.state.userQRCode} message={this.state.message} handleScan={this.handleScan} />
     } else if (this.state.view === 'view-qrcode-data-screen') {
       view = (
         <View style={styles.container}>
-          <Text>{this.state.QRCodeData}</Text>
+          <Text>{this.state.selectedUser}</Text>
           <Button
             title="Go Back"
             onPress={() => {
@@ -176,15 +181,37 @@ export default class App extends React.Component {
         </View>
       );
     } else if (this.state.view === 'user-data-screen') {
-      view = <UserDataScreen selectedUser={this.state.selectedUser} refresh={this.refresh} server={server} />;
-     } else if (this.state.view === 'add-entries-screen') {
-      view = <AddEntriesScreen />;
+      view = (
+        <SelectedUserDataScreen
+          getSelectedUserData={this.getSelectedUserData}
+          selectedUserData={this.state.selectedUserData}
+          refresh={this.refresh}
+          server={server}
+        />
+      );
+    } else if (this.state.view === 'add-entries-screen') {
+      view = (
+        <AddEntriesScreen
+          selectedUserData={this.state.selectedUserData}
+          handleSubmitEntries={this.handleSubmitEntries}
+        />
+      );
     } else if (this.state.view === 'home') {
-      view = <Options changeView={this.refresh} />
+      view = <Test refresh={this.refresh} />;
     } else {
       console.log('Other views');
     }
-    return view;
+    return (
+      <View style={styles.container}>
+        {view}
+        <Button
+          title="Go Back"
+          onPress={() => {
+            this.refresh({ view: 'home' });
+          }}
+        />
+      </View>
+    );
   }
 }
 

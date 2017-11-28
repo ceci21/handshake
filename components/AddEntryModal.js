@@ -40,6 +40,10 @@ export default class AddEntryModal extends Component {
               this.props.addEntry(this.state.name);
             }}>
             </Button>
+            <Button title="I didn't mean to do that" onPress={() => {
+              this.setModalVisible(!this.state.modalVisible);
+            }}>
+            </Button>
 
           </View>
          </View>
