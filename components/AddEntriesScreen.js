@@ -6,29 +6,28 @@ export default class AddEntriesScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      entryNames: ['Name', 'Email', 'Website'],
-      textInputs: [],
       entries: this.props.userData.entries
     }
   }
-  
-  componentWillMount() {
-    this.setState({textInputs: this.getTextInputs(this.state.entryNames)});
-  }
 
-  getTextInputs = (entryNames) => {
-    let textInputs = entryNames.map((entryName) => {
+
+
+  getTextInputs = () => {
+    let entries = this.state.entries;
+    console.log('Entries: ', entries);
+    let textInputs = entries.map((entry) => {
       return (
         <TextInput 
-          id={entryName} 
-          placeholder={entryName} 
+          id={entry.name} 
+          placeholder={entry.name} 
           style={styles.textInput} 
-          onChangeText={(text) => {
-            this.setState((prevState, props) => {
-              let entries = Object.assign({}, prevState.entries);
-              entries[entryName] = text;
-              return {entries: entries};
-            });
+          onSubmitEditing={(text) => {
+            console.log(text);
+            // this.setState((prevState, props) => {
+            //   let entries = Object.assign({}, prevState.entries);
+            //   entries[entry.name] = text;
+            //   return {entries: entries};
+            // });
           }}
         />
       );
@@ -38,19 +37,26 @@ export default class AddEntriesScreen extends React.Component {
 
   addEntry = (name) => {
     this.setState((prevState, props) => {
-      // Add entry name.
-      let entryNames = prevState.entryNames.slice();
-      entryNames.push(name);
-      // Get new textInputs.
-      let textInputs = this.getTextInputs(entryNames);
-      return {entryNames: entryNames, textInputs: textInputs};
+
+      // Create new entry and push to entries. 
+      let entries = prevState.entries.slice();
+      let entry = {
+        name: name,
+        value: null
+      };
+      entries.push(entry);
+
+      // Get new text inputs. 
+      return {entries: entries};
+      
     });
   }
 
   render() {
     return (
       <View style={styles.container}>
-        {this.state.textInputs}
+        {/* {this.state.textInputs} */}
+        {this.getTextInputs()}
         <AddEntryModal 
           addEntry={this.addEntry} 
         />

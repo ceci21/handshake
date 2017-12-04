@@ -20,7 +20,7 @@ const audioFiles = {
 
 import helpers from './helpers.js';
 
-const server = 'http://192.168.43.247:3000';
+const server = 'http://10.30.64.233:3000';
 // const server = 'http://handshake-server.herokuapp.com'
 
 const socket = io(server);
@@ -90,17 +90,15 @@ export default class App extends React.Component {
 
   handleLogin = userCredentials => {
     // Log in
-    helpers.post(server + '/login', userCredentials, response => {
-      response = JSON.parse(response._bodyText);
-      // Get QR code.
+    helpers.post(server + '/login', userCredentials, response1 => {
+      let message = JSON.parse(response1._bodyText);
+      // Grab QR Code Data
       this.getUserQRCode();
-      // Refresh app.
-      this.refresh({ message: response.message }, { view: 'home', user: userCredentials.username });
+      // Get user data
+      helpers.post(server + '/userdata', {username: userCredentials.username}, response2 => {
+        this.refresh({message: message.message}, {view: 'home', user: userCredentials.username, userData: JSON.parse(response2._bodyText)});
+      })
     });
-
-    helpers.post(server + '/userdata', {username: userCredentials.username}, response => {
-      this.refresh(null, {userData: JSON.parse(response._bodyText)});
-    })
   };
 
   handleSignup = userData => {
@@ -123,11 +121,12 @@ export default class App extends React.Component {
   };
 
   handleSubmitEntries = entryData => {
-    let userData = {
-      user: this.state.user,
+    console.log(this.state.userData);
+    let data = {
+      _id: this.state.userData._id,
       entryData: entryData
     };
-    helpers.post(server + '/updateuserentries', userData, response => {
+    helpers.post(server + '/updateuserentries', data, response => {
       console.log(response._bodyText);
     });
   };
